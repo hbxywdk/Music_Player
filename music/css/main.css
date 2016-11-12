@@ -152,6 +152,7 @@ a{
 	position: absolute;
 	display: none;
 	left: 0;
+	text-align: left;
 	z-index: 9;
 }
 /*底部*/

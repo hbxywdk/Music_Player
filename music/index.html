@@ -37,7 +37,7 @@
 				</section>
 				<section class="text fl c3m">
 					<!-- 拖歌对齐线 -->
-					<div class="change_line"></div>
+					<div class="change_line">辅助线仅供参考</div>
 					<ul id="myword" class="c3m">
 						<!-- 歌词 -->
 					</ul>
@@ -81,10 +81,79 @@
 	</section>
 	<audio src="" id="mainAudia"></audio>
 </body>
+<!--引入处理好的歌词js-->
+<script src="./lrc/baimeigui.lrc.js"></script>
+<script src="./lrc/fukua.lrc.js"></script>
+<script src="./lrc/yuebanxiaoyequ.lrc.js"></script>
+<script src="./lrc/xialuotefannao.lrc.js"></script>
+<script src="./lrc/nianlun.lrc.js"></script>
 <script src="./lrc/yanyuan.lrc.js"></script>
-<script src="./lrc/jilejingtu.lrc.js"></script>
 <script src="./lrc/movesLikeJagger.lrc.js"></script>
 <script src="./lrc/weifengtangtang.lrc.js"></script>
 
 <script src="./js/main.js"></script>
+<script>
+//歌曲信息
+var MusicData=[
+	{
+		'name':'白玫瑰(粤语)',
+		'singer':'陈奕迅',
+		'pic':'./images/baimeigui.jpg',
+		'src_':'./audio/baimeigui.mp3',
+		'text':baimeigui
+	},
+	{
+		'name':'浮夸(粤语)',
+		'singer':'陈奕迅',
+		'pic':'./images/fukua.jpg',
+		'src_':'./audio/fukua.mp3',
+		'text':fukua
+	},
+	{
+		'name':'月半小夜曲(粤语)',
+		'singer':'李克勤',
+		'pic':'./images/yuebanxiaoyequ.jpg',
+		'src_':'./audio/yuebanxiaoyequ.mp3',
+		'text':yuebanxiaoyequ
+	},
+	{
+		'name':'夏洛特烦恼',
+		'singer':'金志文',
+		'pic':'./images/xialuotefannao.jpg',
+		'src_':'./audio/xialuotefannao.mp3',
+		'text':xialuotefannao
+	},
+	{
+		'name':'年轮',
+		'singer':'张碧晨',
+		'pic':'./images/nianlun.jpg',
+		'src_':'./audio/nianlun.mp3',
+		'text':nianlun
+	},
+	{
+		'name':'威风堂堂',
+		'singer':'祈Inory',
+		'pic':'./images/weifengtangtang.jpg',
+		'src_':'./audio/weifengtangtang.mp3',
+		'text':weifengtangtang
+	},
+	{
+		'name':'演员',
+		'singer':'李荣浩',
+		'pic':'./images/yanyuan.jpg',
+		'src_':'./audio/yanyuan.mp3',
+		'text':yanyuan
+	},
+	{
+		'name':'Moves Like Jagger',
+		'singer':'Maroon 5',
+		'pic':'./images/MovesLikeJagger.jpg',
+		'src_':'./audio/Moves Like Jagger.mp3',
+		'text':movesLikeJagger
+	},
+
+
+]
+audioPlayer.init(MusicData);
+</script>
 </html>

@@ -1,11 +1,8 @@
 /**BUG
- * 1. 歌单 缩回 对准线 宽度没有变
- * 2. 先点击进度条跳转 歌词滚动失效
- * 3. 先调静音 再点击喇叭图标 喇叭图标变了 却没声音
- * 4. 偶尔点击任意位置会出现歌曲跳转
+ * 1.先调静音 再点击喇叭图标 喇叭图标变了 却没声音
+ * 2.歌词大小切换时出现歌词不滚动
+ * 3.火狐等浏览器 小bug
  */
-
-//一些工具函数
 /**
  * @param DOM
  * @return 距离页面左边距离
@@ -62,20 +59,12 @@ function formatTime(t){
 	}
 	return arg;
 }
-/**
- * 获取计算后样式
- * @param {DOM} 
- *  @param {DOM}
- * @return x:xx
- */
-
 var audioPlayer={//主体
-	d:document.documentElement || document.body,
 	//相关元素获取
+	d:document.documentElement || document.body,
 	mainAudia:getDOM('#mainAudia'),//audio
 	listsbt:getDOM('#listsbt'),
 	lists:getDOM('.side'),//列表
-	
 	bg:getDOM('.main_bg'),//大背景
 	music_name:getDOM('.music_info1'),//歌曲名
 	time_now:getDOM('.time_now'),//当前播放时间
@@ -84,11 +73,9 @@ var audioPlayer={//主体
 	next_b:getDOM('.next'),//下
 	stop_b:getDOM('.stop'),//暂停
 	play_type_b:getDOM('.play_type'),//播放模式按钮
-
 	jd_col_bar:getDOM('.jd_col_bar'),//进度控制点
 	jd_info:getDOM('.jd_info'),//进度条背景
 	jd_now_bar:getDOM('.jd_now_bar'),//进度条进度
-
 	sound:getDOM('.sound'),//喇叭按钮
 	sound_bar:getDOM('.sound_bar'),//声音父元素
 	sound_now_bar:getDOM('.now_bar'),//声进度条进度
@@ -98,15 +85,12 @@ var audioPlayer={//主体
 	change_line:getDOM('.change_line'),//拖动基准线
 	myword_top:0,//歌词margin-top
 	inDrag:false,//是否在拖动歌词
-
-
 	//相关变量设置
 	data:'',
 	is_mute:false,//是否静音
 	serial:0,//第几首
 	stop_key:false,//是否在暂停
 	play_type:1,//1顺序循环 2单曲循环 3 随机播放
-
 	lines:0,//当前歌曲的歌词行数
 	is_drag_progress:false,//是否在拖动进度条
 	init:function(da){
@@ -126,7 +110,6 @@ var audioPlayer={//主体
 			clearTimeout(TO);
 			TO=setTimeout(function(){
 				This.change_line.style.width=This.text.offsetWidth+'px';
-				
 				yeye=Math.ceil( This.text.offsetHeight/2 );
 				This.change_line.style.top=yeye+'px';
 			},100)
@@ -135,57 +118,16 @@ var audioPlayer={//主体
 	listshow:function(){//歌曲列表显示按钮
 		var This=this;
 		This.listsbt.onchange=function(){
-			console.log(This.text);
-			
 			if (this.checked==true) {
 				This.lists.style.cssText='left:0;';
 				This.text.style.cssText = 'width:60%;left:40%;';
-				setTimeout(function(){
-					This.change_line.style.width=This.text.offsetWidth+'px';
-				},100)
-				
 			}else{
 				This.lists.style.cssText='left:-50%;';
 				This.text.style.cssText = 'width:100%;left:0;';
+			}
+			setTimeout(function(){//延迟0.3s（css时间） 否则css没设置完成 得到This.text.offsetWidth错误
 				This.change_line.style.width=This.text.offsetWidth+'px';
-			}
-			console.log(This.text.offsetWidth);
-				setTimeout(function(){
-					This.change_line.style.width=This.text.offsetWidth+'px';
-				},100)
-			
-		}
-	},
-	jd_col:function(){//进度条拖动
-		var This=this;
-		This.jd_col_bar.onmousedown=function(e){//拖动方式
-			var e=e || event,
-			x=e.pageX-getElementLeft(This.jd_info);
-			This.is_drag_progress=true;
-			//console.log(x);
-			This.d.onmousemove=function(e){
-				x=e.pageX-getElementLeft(This.jd_info);
-				if (x<0) x=0;
-				if (x>This.jd_info.offsetWidth) x=This.jd_info.offsetWidth;
-				This.jd_col_bar.style.left=x+'px';
-				This.jd_now_bar.style.width=x+"px";
-				//console.log(x)
-			}
-			This.d.onmouseup=function(e){
-				This.d.onmousemove=null;
-				if(This.is_drag_progress){
-					var tuodong_per=(x/This.jd_info.offsetWidth).toFixed(3);//算拖动百分比
-					This.js_jump(tuodong_per);//进度跳转函数
-					This.is_drag_progress=false;
-				}
-			}
-
-		}
-		This.jd_info.onclick=function(e){
-			var e=e || event,
-			x=e.pageX-getElementLeft(This.jd_info);
-			var tuodong_per=(x/This.jd_info.offsetWidth).toFixed(3);//算拖动百分比
-			This.js_jump(tuodong_per);//进度跳转函数
+			},300)
 		}
 	},
 	js_jump:function(jxd){//进度跳转
@@ -224,7 +166,6 @@ var audioPlayer={//主体
 		}
 	},
 	change:function(par){//切歌
-		console.log(par);
 		var This=this,
 		mus=This.data[par],//取到要播放的
 		icon=This.lists.querySelectorAll('.icon_play');//给正在播放的加上动效
@@ -237,7 +178,6 @@ var audioPlayer={//主体
 			}
 		})
 		This.serial=par;//改变当前曲目num
-		
 		This.myword_top=This.myword.style.marginTop=0;//重置 歌词margintop
 		This.creatText(mus.text);//创建歌词
 		This.stop_key=false;//初始化暂停状态为false
@@ -267,6 +207,35 @@ var audioPlayer={//主体
 		This.myword.innerHTML=word;
 		This.drag_word();//拖动歌词
 	},
+	jd_col:function(){//进度条拖动
+		var This=this;
+		This.jd_col_bar.onmousedown=function(e){//拖动方式
+			var e=e || event,
+			x=e.pageX-getElementLeft(This.jd_info);
+			This.is_drag_progress=true;
+			This.d.onmousemove=function(e){
+				x=e.pageX-getElementLeft(This.jd_info);
+				if (x<0) x=0;
+				if (x>This.jd_info.offsetWidth) x=This.jd_info.offsetWidth;
+				This.jd_col_bar.style.left=x+'px';
+				This.jd_now_bar.style.width=x+"px";
+			}
+			This.d.onmouseup=function(e){
+				This.d.onmousemove=null;
+				if(This.is_drag_progress){
+					var tuodong_per=(x/This.jd_info.offsetWidth).toFixed(3);//算拖动百分比
+					This.js_jump(tuodong_per);//进度跳转函数
+					This.is_drag_progress=false;
+				}
+			}
+		}
+		This.jd_info.onclick=function(e){
+			var e=e || event,
+			x=e.pageX-getElementLeft(This.jd_info);
+			var tuodong_per=(x/This.jd_info.offsetWidth).toFixed(3);//算拖动百分比
+			This.js_jump(tuodong_per);//进度跳转函数
+		}
+	},
 	listen:function(text){//播放监听
 		var This=this,jd_nowx;
 		This.mainAudia.ontimeupdate = function(e) {//播放时间更新监听
@@ -283,31 +252,21 @@ var audioPlayer={//主体
 				for (var i = 0; i < mywordli.length-1; i++) {
 					mywordli[i].classList.remove('active');
 				}
-				
 				var yeye=Math.round(Math.floor( This.text.offsetHeight/mywordli[0].offsetHeight )/2);//歌词爷爷级容器能装几行歌词/2
-				//console.log(yeye);
 				text.forEach(function(e,i){
 					if(text[i+1]==null)return;
 					if(This.mainAudia.currentTime>e[0]&&This.mainAudia.currentTime<=text[i+1][0]){
-
-						//当前歌词加active
-						mywordli[i].classList.add('active');
-						//console.log(i)
-						//歌词自动滚动
-						
-							if (i<yeye) {
-								This.myword_top=0;
-							}else{
-								This.myword_top=(mywordli[0].offsetHeight*(yeye-i))+'px';
-							}
-							
-							This.myword.style.marginTop=This.myword_top;
-						
+						mywordli[i].classList.add('active');//当前歌词加active
+						if (i<yeye) {//歌词自动滚动
+							This.myword_top=0;
+						}else{
+							This.myword_top=(mywordli[0].offsetHeight*(yeye-i))+'px';
+						}
+						This.myword.style.marginTop=This.myword_top;
 					}
 				})
 			}
 		}
-		//This.mainAudia.currentTime=198; //播放时间跳转
         This.mainAudia.addEventListener('ended',zhong,false);  //播放结束
         function zhong(){     
             This.endJudge();//结束判断函数 根据播放模式来决定 下一首放什么
@@ -345,12 +304,17 @@ var audioPlayer={//主体
 				var percent=(-(result-(This.text.offsetHeight/2)+34)/This.myword.offsetHeight).toFixed(3);
 				if (isNaN(percent)) return;//  0/0=NAN return
 				console.log(result-This.text.offsetHeight)
+				if (percent<0) percent=0;
 				console.log(percent)
 				This.js_jump(percent);
-				
+				This.d.onmouseup=null;//清空事件！！！
 			}
+/*			This.d.onmouseleave=function(){//火狐mouseleave 暂时跳转为0
+				This.d.onmousemove=null;
+				This.d.onmouseup=null;
+				This.js_jump(0);
+			}*/
 		}
-		
 	},
 	endJudge:function(){
 		var This=this;
@@ -361,8 +325,7 @@ var audioPlayer={//主体
 			}
 			This.change(This.serial);
 		}
-		else if (This.play_type===3) {//随机 随机一首出来  但不能是当前这首
-			console.error(This.serial);
+		else if(This.play_type===3) {//随机 随机一首出来  但不能是当前这首
 			function ram(){//根据长度递归随机出歌曲编号
 				var dra=Math.floor( ( Math.random()*This.data.length ) );
 				//只有一首歌 返回0 、大于一首 返回除当前这首的随机曲目
@@ -408,7 +371,6 @@ var audioPlayer={//主体
 				x=e.pageX-getElementLeft(This.sound_bar);
 				if (x<0) x=0;
 				if (x>This.sound_bar.offsetWidth) x=This.sound_bar.offsetWidth;
-				//console.log(x);
 				if(This.mainAudia.volume===0 && x===0 && !key){This.sound.click();key=!key;} 
 				if (x>0 && key) {This.sound.click();key=!key;}
 				if (x>This.sound_bar.offsetWidth) x=This.sound_bar.offsetWidth;
@@ -488,52 +450,4 @@ var audioPlayer={//主体
 			This.mainAudia.loop=false;
 		}
 	},
-
 };
-/*autoplay	设置或返回是否在就绪（加载完成）后随即播放音频。
-currentTime	设置或返回音频中的当前播放位置（以秒计）。
-defaultMuted	设置或返回音频默认是否静音。
-duration	返回音频的长度（以秒计）。
-ended	返回音频的播放是否已结束。
-error	返回表示音频错误状态的 MediaError 对象。
-loop	设置或返回音频是否应在结束时再次播放。
-muted	设置或返回是否关闭声音。
-paused	设置或返回音频是否暂停。
-readyState	返回音频当前的就绪状态。
-src	设置或返回音频的 src 属性的值。
-volume	设置或返回音频的音量。
-play()	开始播放音频。
-pause()	暂停当前播放的音频。*/
-var MusicData=[
-	{
-		'name':'威风堂堂',
-		'singer':'祈Inory',
-		'pic':'./images/weifengtangtang.jpg',
-		'src_':'./audio/威风堂堂.mp3',
-		'text':weifengtangtang
-	},
-	{
-		'name':'极乐净土',
-		'singer':'未知',
-		'pic':'./images/jilejingtu.jpg',
-		'src_':'./audio/极乐净土.mp3',
-		'text':jilejingtu
-	},
-	{
-		'name':'演员',
-		'singer':'李荣浩',
-		'pic':'./images/yanyuan.jpg',
-		'src_':'./audio/yanyuan.mp3',
-		'text':yanyuan
-	},
-	{
-		'name':'Moves Like Jagger',
-		'singer':'Maroon 5',
-		'pic':'./images/MovesLikeJagger.jpg',
-		'src_':'./audio/Moves Like Jagger.mp3',
-		'text':movesLikeJagger
-	},
-
-
-]
-audioPlayer.init(MusicData);
