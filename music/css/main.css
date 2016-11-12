@@ -133,6 +133,9 @@ a{
 	top: 0;
 	text-align: center;
 }
+.main .lyric .text ul{
+	cursor: -webkit-grab;
+}
 .main .lyric .text ul li{
 	line-height: 34px;
 	height: 34px;
@@ -141,7 +144,15 @@ a{
 /*激活状态歌词*/
 .main .lyric .text ul li.active{
 	color: #31c27c;
-	font-size: 19px;
+	font-size: 23px;
+}
+.change_line{
+	height: 0px;
+	border-top: 2px dashed #ccc;
+	position: absolute;
+	display: none;
+	left: 0;
+	z-index: 9;
 }
 /*底部*/
 .main footer{

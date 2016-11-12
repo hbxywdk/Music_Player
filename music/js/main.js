@@ -1,3 +1,10 @@
+/**BUG
+ * 1. 歌单 缩回 对准线 宽度没有变
+ * 2. 先点击进度条跳转 歌词滚动失效
+ * 3. 先调静音 再点击喇叭图标 喇叭图标变了 却没声音
+ * 4. 偶尔点击任意位置会出现歌曲跳转
+ */
+
 //一些工具函数
 /**
  * @param DOM
@@ -55,13 +62,20 @@ function formatTime(t){
 	}
 	return arg;
 }
+/**
+ * 获取计算后样式
+ * @param {DOM} 
+ *  @param {DOM}
+ * @return x:xx
+ */
+
 var audioPlayer={//主体
 	d:document.documentElement || document.body,
 	//相关元素获取
 	mainAudia:getDOM('#mainAudia'),//audio
 	listsbt:getDOM('#listsbt'),
 	lists:getDOM('.side'),//列表
-	text:getDOM('.text'),//歌词父元素
+	
 	bg:getDOM('.main_bg'),//大背景
 	music_name:getDOM('.music_info1'),//歌曲名
 	time_now:getDOM('.time_now'),//当前播放时间
@@ -79,6 +93,11 @@ var audioPlayer={//主体
 	sound_bar:getDOM('.sound_bar'),//声音父元素
 	sound_now_bar:getDOM('.now_bar'),//声进度条进度
 	col_bar:getDOM('.col_bar'),//音控制点
+	text:getDOM('.text'),//歌词大
+	myword:getDOM('#myword'),//歌词ul
+	change_line:getDOM('.change_line'),//拖动基准线
+	myword_top:0,//歌词margin-top
+	inDrag:false,//是否在拖动歌词
 
 
 	//相关变量设置
@@ -96,17 +115,44 @@ var audioPlayer={//主体
 		this.addMisic();//填充歌曲列表
 		this.change(this.serial);//切歌函数 切到第一首
 		this.addButtonFuc();//按钮功能
+		this.winChange();//resize事件
+	},
+	winChange:function(){
+		var This=this,TO,yeye;
+		This.change_line.style.width=This.text.offsetWidth+'px';
+		yeye=Math.ceil( This.text.offsetHeight/2 );
+		This.change_line.style.top=yeye+'px';
+		window.onresize=function(){//函数节流
+			clearTimeout(TO);
+			TO=setTimeout(function(){
+				This.change_line.style.width=This.text.offsetWidth+'px';
+				
+				yeye=Math.ceil( This.text.offsetHeight/2 );
+				This.change_line.style.top=yeye+'px';
+			},100)
+		}
 	},
 	listshow:function(){//歌曲列表显示按钮
 		var This=this;
 		This.listsbt.onchange=function(){
+			console.log(This.text);
+			
 			if (this.checked==true) {
 				This.lists.style.cssText='left:0;';
 				This.text.style.cssText = 'width:60%;left:40%;';
+				setTimeout(function(){
+					This.change_line.style.width=This.text.offsetWidth+'px';
+				},100)
+				
 			}else{
 				This.lists.style.cssText='left:-50%;';
 				This.text.style.cssText = 'width:100%;left:0;';
+				This.change_line.style.width=This.text.offsetWidth+'px';
 			}
+			console.log(This.text.offsetWidth);
+				setTimeout(function(){
+					This.change_line.style.width=This.text.offsetWidth+'px';
+				},100)
 			
 		}
 	},
@@ -116,21 +162,22 @@ var audioPlayer={//主体
 			var e=e || event,
 			x=e.pageX-getElementLeft(This.jd_info);
 			This.is_drag_progress=true;
-			console.log(x);
+			//console.log(x);
 			This.d.onmousemove=function(e){
 				x=e.pageX-getElementLeft(This.jd_info);
 				if (x<0) x=0;
 				if (x>This.jd_info.offsetWidth) x=This.jd_info.offsetWidth;
 				This.jd_col_bar.style.left=x+'px';
 				This.jd_now_bar.style.width=x+"px";
-				console.log(x)
+				//console.log(x)
 			}
 			This.d.onmouseup=function(e){
 				This.d.onmousemove=null;
-				This.is_drag_progress=false;
-				var tuodong_per=(x/This.jd_info.offsetWidth).toFixed(3);//算拖动百分比
-				//alert(tuodong_per)
-				This.js_jump(tuodong_per);//进度跳转函数
+				if(This.is_drag_progress){
+					var tuodong_per=(x/This.jd_info.offsetWidth).toFixed(3);//算拖动百分比
+					This.js_jump(tuodong_per);//进度跳转函数
+					This.is_drag_progress=false;
+				}
 			}
 
 		}
@@ -138,7 +185,6 @@ var audioPlayer={//主体
 			var e=e || event,
 			x=e.pageX-getElementLeft(This.jd_info);
 			var tuodong_per=(x/This.jd_info.offsetWidth).toFixed(3);//算拖动百分比
-			//alert(tuodong_per)
 			This.js_jump(tuodong_per);//进度跳转函数
 		}
 	},
@@ -191,6 +237,9 @@ var audioPlayer={//主体
 			}
 		})
 		This.serial=par;//改变当前曲目num
+		
+		This.myword_top=This.myword.style.marginTop=0;//重置 歌词margintop
+		This.creatText(mus.text);//创建歌词
 		This.stop_key=false;//初始化暂停状态为false
 		This.stop_b.classList.remove('stop2'); //初始化暂停按钮状态
 		This.music_name.innerHTML=mus.name+' - '+mus.singer;//改歌名
@@ -205,21 +254,57 @@ var audioPlayer={//主体
         		clearInterval(check);
         		This.mainAudia.play();//播放
 		        This.time_all.innerHTML=formatTime( parseInt(This.mainAudia.duration) );//设置总时间
-        		This.listen();//开启监听
+        		This.listen(mus.text);//开启监听
         	}
         },50)
 	},
-	listen:function(){//播放监听
+	creatText:function(text){//创建歌词
+		var This=this,word='';
+		//alert(text)
+		text.forEach(function(e,i){
+			word+='<li>'+e[1]+'</li>';
+		})
+		This.myword.innerHTML=word;
+		This.drag_word();//拖动歌词
+	},
+	listen:function(text){//播放监听
 		var This=this,jd_nowx;
 		This.mainAudia.ontimeupdate = function(e) {//播放时间更新监听
 			This.time_now.innerHTML=formatTime( parseInt(This.mainAudia.currentTime) );//更新时间
-
 			if (!This.is_drag_progress) {//是否拖动了进度条
 				jd_nowx=(This.mainAudia.currentTime/This.mainAudia.duration).toFixed(3);//播放百分比
-				//console.log(jd_nowx);
 				var left_jd_b=Math.ceil(This.jd_info.offsetWidth*jd_nowx);//算left
 				This.jd_col_bar.style.left=left_jd_b+"px";
 				This.jd_now_bar.style.width=left_jd_b+"px";
+			}
+			if (!This.inDrag) {//鼠标不拖动时滚动
+				var mywordli=This.myword.querySelectorAll('li');
+				//先移出所有class
+				for (var i = 0; i < mywordli.length-1; i++) {
+					mywordli[i].classList.remove('active');
+				}
+				
+				var yeye=Math.round(Math.floor( This.text.offsetHeight/mywordli[0].offsetHeight )/2);//歌词爷爷级容器能装几行歌词/2
+				//console.log(yeye);
+				text.forEach(function(e,i){
+					if(text[i+1]==null)return;
+					if(This.mainAudia.currentTime>e[0]&&This.mainAudia.currentTime<=text[i+1][0]){
+
+						//当前歌词加active
+						mywordli[i].classList.add('active');
+						//console.log(i)
+						//歌词自动滚动
+						
+							if (i<yeye) {
+								This.myword_top=0;
+							}else{
+								This.myword_top=(mywordli[0].offsetHeight*(yeye-i))+'px';
+							}
+							
+							This.myword.style.marginTop=This.myword_top;
+						
+					}
+				})
 			}
 		}
 		//This.mainAudia.currentTime=198; //播放时间跳转
@@ -229,6 +314,43 @@ var audioPlayer={//主体
             //执行下一曲判断之后 取消监听事件 不然ended事件会翻倍执行 巨坑！！！
             This.mainAudia.removeEventListener('ended',zhong,false);
         }
+	},
+	drag_word:function(){//歌词拖动
+		var This=this;
+		This.myword.onmousedown=function(e){
+			var e=e||event,t,t2,result;
+			This.inDrag=!This.inDrag;
+			t=e.pageY;
+			t2=parseInt( getComputedStyle(This.myword, null).marginTop );//拖动时歌词的marginTop
+			This.myword.classList.remove('c3m');
+			This.change_line.style.display='block';
+			This.d.onmousemove=function(e){
+				var e=e||event,
+				cha=e.pageY-t;
+				result=t2+cha;
+				if ( result>(This.text.offsetHeight/2) ) {
+					result=This.text.offsetHeight/2;
+				}
+				if ( result<(This.text.offsetHeight/2-This.myword.offsetHeight) ) {
+					result=This.text.offsetHeight/2-This.myword.offsetHeight;
+				}
+				This.myword.style.marginTop=result+'px';
+			}
+			This.d.onmouseup=function(){
+				This.d.onmousemove=null;
+				This.inDrag=!This.inDrag;
+				This.myword.classList.add('c3m');
+				This.change_line.style.display='none';
+				//计算百分比
+				var percent=(-(result-(This.text.offsetHeight/2)+34)/This.myword.offsetHeight).toFixed(3);
+				if (isNaN(percent)) return;//  0/0=NAN return
+				console.log(result-This.text.offsetHeight)
+				console.log(percent)
+				This.js_jump(percent);
+				
+			}
+		}
+		
 	},
 	endJudge:function(){
 		var This=this;
@@ -241,7 +363,6 @@ var audioPlayer={//主体
 		}
 		else if (This.play_type===3) {//随机 随机一首出来  但不能是当前这首
 			console.error(This.serial);
-			
 			function ram(){//根据长度递归随机出歌曲编号
 				var dra=Math.floor( ( Math.random()*This.data.length ) );
 				//只有一首歌 返回0 、大于一首 返回除当前这首的随机曲目
@@ -250,9 +371,6 @@ var audioPlayer={//主体
 			var myRam=ram();
 			This.change(myRam);
 		}
-	},
-	creatText:function(){//创建歌词
-
 	},
 	addButtonFuc:function(){//添加按钮功能
 		var This=this;
@@ -369,7 +487,6 @@ var audioPlayer={//主体
 			This.play_type_b.classList.remove('shunxu');
 			This.mainAudia.loop=false;
 		}
-
 	},
 
 };
@@ -384,8 +501,7 @@ muted	设置或返回是否关闭声音。
 paused	设置或返回音频是否暂停。
 readyState	返回音频当前的就绪状态。
 src	设置或返回音频的 src 属性的值。
-volume	设置或返回音频的音量。*/
-/*方法	描述
+volume	设置或返回音频的音量。
 play()	开始播放音频。
 pause()	暂停当前播放的音频。*/
 var MusicData=[
@@ -394,105 +510,28 @@ var MusicData=[
 		'singer':'祈Inory',
 		'pic':'./images/weifengtangtang.jpg',
 		'src_':'./audio/威风堂堂.mp3',
-		'text':''
+		'text':weifengtangtang
 	},
 	{
 		'name':'极乐净土',
 		'singer':'未知',
 		'pic':'./images/jilejingtu.jpg',
 		'src_':'./audio/极乐净土.mp3',
-		'text':''
+		'text':jilejingtu
 	},
 	{
 		'name':'演员',
 		'singer':'李荣浩',
 		'pic':'./images/yanyuan.jpg',
 		'src_':'./audio/yanyuan.mp3',
-		'text':''
+		'text':yanyuan
 	},
 	{
 		'name':'Moves Like Jagger',
 		'singer':'Maroon 5',
 		'pic':'./images/MovesLikeJagger.jpg',
 		'src_':'./audio/Moves Like Jagger.mp3',
-		'text':''
-	},
-	{
-		'name':'Firework',
-		'singer':'Katy Perry',
-		'pic':'./images/firework.jpg',
-		'src_':'./audio/firework.mp3',
-		'text':''
-	},
-	{
-		'name':'威风堂堂',
-		'singer':'祈Inory',
-		'pic':'./images/weifengtangtang.jpg',
-		'src_':'./audio/威风堂堂.mp3',
-		'text':''
-	},
-	{
-		'name':'极乐净土',
-		'singer':'未知',
-		'pic':'./images/jilejingtu.jpg',
-		'src_':'./audio/极乐净土.mp3',
-		'text':''
-	},
-	{
-		'name':'演员',
-		'singer':'李荣浩',
-		'pic':'./images/yanyuan.jpg',
-		'src_':'./audio/yanyuan.mp3',
-		'text':''
-	},
-	{
-		'name':'Moves Like Jagger',
-		'singer':'Maroon 5',
-		'pic':'./images/MovesLikeJagger.jpg',
-		'src_':'./audio/Moves Like Jagger.mp3',
-		'text':''
-	},
-	{
-		'name':'Firework',
-		'singer':'Katy Perry',
-		'pic':'./images/firework.jpg',
-		'src_':'./audio/firework.mp3',
-		'text':''
-	},
-	{
-		'name':'威风堂堂',
-		'singer':'祈Inory',
-		'pic':'./images/weifengtangtang.jpg',
-		'src_':'./audio/威风堂堂.mp3',
-		'text':''
-	},
-	{
-		'name':'极乐净土',
-		'singer':'未知',
-		'pic':'./images/jilejingtu.jpg',
-		'src_':'./audio/极乐净土.mp3',
-		'text':''
-	},
-	{
-		'name':'演员',
-		'singer':'李荣浩',
-		'pic':'./images/yanyuan.jpg',
-		'src_':'./audio/yanyuan.mp3',
-		'text':''
-	},
-	{
-		'name':'演员',
-		'singer':'李荣浩',
-		'pic':'./images/yanyuan.jpg',
-		'src_':'./audio/yanyuan.mp3',
-		'text':''
-	},
-	{
-		'name':'演员',
-		'singer':'李荣浩',
-		'pic':'./images/yanyuan.jpg',
-		'src_':'./audio/yanyuan.mp3',
-		'text':''
+		'text':movesLikeJagger
 	},
 
 
