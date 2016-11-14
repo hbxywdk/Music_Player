@@ -18,7 +18,6 @@ function readFile(path)
 	function walk(file)
 	{ 
 		var da =fs.readFileSync(path+'/'+file,"utf-8");
-		//var dax='var '+file+'=['+da.toString().split('\n')+']'
 		var dax= parseLyric(da);
 		writeFile(path+'/'+file+".js",'var '+file.replace('.lrc','')+'=['+dax+']');
 	}
@@ -45,7 +44,7 @@ function parseLyric(text) {
 	    value = v.replace(pattern, '');
 	    if (Object.prototype.toString.call(time)==='[object Array]') {
 	    	var t = time[0].split(':');
-	    	result.push("["+[parseInt(t[0].replace('[',''), 10)*60+parseFloat(t[1].replace(']','')), '\"'+value.replace('\r','').replace('/\"/g','').replace('/\'/g','').replace('/\W/g','')+'\"']+"]");
+	    	result.push("["+[parseInt(t[0].replace('[',''), 10)*60+parseFloat(t[1].replace(']','')), '\"'+value.replace(/\r|\"|\'|\-|/g,'')+'\"']+"]");
 	    }
 	});
 	console.log(result);
