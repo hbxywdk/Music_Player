@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black">
 	<meta name="format-detection" content="telephone=no">
 	<title>Music</title>
-	<link rel="stylesheet" href="./css/main.css">
+	<link rel="stylesheet" href="./css/main.min.css">
 </head>
 <body>
 	<section class="main_bg">
@@ -71,7 +70,7 @@
 					<div class="now_bar com_now_bar" style="width:100px;"></div>
 				</div>
 			</div>
-			
+
 		</footer>
 	</section>
 	<audio src="" id="mainAudia"></audio>
@@ -83,7 +82,6 @@
 <script src="./lrc/nianlun.lrc.js"></script>
 <script src="./lrc/yanyuan.lrc.js"></script>
 <script src="./lrc/movesLikeJagger.lrc.js"></script>
-<script src="./lrc/weifengtangtang.lrc.js"></script>
 <script src="./js/main.js"></script>
 <script>
 var MusicData=[
@@ -123,13 +121,6 @@ var MusicData=[
 		'text':nianlun
 	},
 	{
-		'name':'威风堂堂',
-		'singer':'祈Inory',
-		'pic':'./images/weifengtangtang.jpg',
-		'src_':'./audio/weifengtangtang.mp3',
-		'text':weifengtangtang
-	},
-	{
 		'name':'演员',
 		'singer':'李荣浩',
 		'pic':'./images/yanyuan.jpg',
@@ -144,6 +135,15 @@ var MusicData=[
 		'text':movesLikeJagger
 	},
 ]
-audioPlayer.init(MusicData);
+
+var isIE =/*@cc_on!@*/false;
+window.onload=function(){
+	isIE ? NO_IE() : audioPlayer.init(MusicData);
+}
+
+function NO_IE(){
+	document.write('<h2>您的浏览器版本过低，请<a href="http://www.google.cn/intl/zh-CN/chrome/browser/">下载</a>最新版本浏览器！</h2>');
+}
+
 </script>
 </html>
